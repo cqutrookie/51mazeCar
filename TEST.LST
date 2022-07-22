@@ -1,0 +1,158 @@
+C51 COMPILER V9.53.0.0   TEST                                                              11/29/2021 12:52:26 PAGE 1   
+
+
+C51 COMPILER V9.53.0.0, COMPILATION OF MODULE TEST
+OBJECT MODULE PLACED IN TEST.OBJ
+COMPILER INVOKED BY: D:\C51\BIN\C51.EXE TEST.C COMPACT OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include<reg52.h>
+   2          #include<intrins.h>
+   3          sfr P4=0xe8;
+   4          //o¨¬¨ªa¦Ì??¡¤?¨®?¨²?¡§¨°?
+   5          sbit A0=P4^0;
+   6          sbit A1=P2^0;
+   7          sbit A2=P2^7;
+   8          //o¨¬¨ªa¡ä??D?¡Â?¨®¨º?D?o??¨²?¡§¨°?¡ê¡§?¨®¨º?¦Ì?D?o??¦Ì?a 0¡ê
+   9          sbit tube1=P4^2;
+  10          sbit tube2=P4^3;
+  11          sbit irR1=P2^1; //?¡ã
+  12          sbit irR2=P2^2; //¡Á¨®¨ªa
+  13          sbit irR3=P2^3; //¡Á¨®
+  14          sbit irR4=P2^4; //¨®¨°
+  15          sbit irR5=P2^5; //¨®¨°¨ªa
+  16          sbit Beep=P3^7;
+  17          sbit S1=P4^1;
+  18          bit irC=0 ,irL=0,irR=0,irLU=0,irRU=0;//?¡§¨°?o¨¬¨ªa¡ä??D?¡Â?¨¬2a¡Á¡ä¨¬?¨¨?????¡À?¨¢?¡ê??a 0 ?T??¡ã-
+  19          //o¨¬¨ªa¡¤¡é¨¦?????o¨º?¡§¨°?(¡ä?¨¨?¡ä??D?¡Â¡Á¨¦o?)
+  20          #define uint unsigned int
+  21          #define uchar unsigned char
+  22            uchar code numbers[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+  23            void delay_ms(uint z)
+  24          {
+  25   1        uchar i,j;
+  26   1        while(--z)
+  27   1        {
+  28   2          _nop_();
+  29   2          i=2;
+  30   2          j=199;
+  31   2          do
+  32   2          {
+  33   3            while(--j);
+  34   3          }while(--i);
+  35   2        }
+  36   1      }
+  37          void display(uint k)
+  38          {
+  39   1        tube1=0;
+  40   1        tube2=1;
+  41   1        P0=numbers[k/10];
+  42   1        tube1=1;
+  43   1        tube2=0;
+  44   1        P0=numbers[k%10];
+  45   1          
+  46   1      }
+  47          void ir_on(uchar ch)
+  48          {
+  49   1        A0=ch&0x01; 
+  50   1        A1=ch&0x02; 
+  51   1        A2=ch&0x04; 
+  52   1      }
+  53          void scan(uchar k)
+  54          {
+  55   1        switch(k)
+C51 COMPILER V9.53.0.0   TEST                                                              11/29/2021 12:52:26 PAGE 2   
+
+  56   1        {
+  57   2          case 0:ir_on(0);
+  58   2                  delay_ms(5);
+  59   2                  if(!irR1){
+  60   3                    Beep=0;
+  61   3                    display(1);
+  62   3                  }
+  63   2                  else Beep=1;
+  64   2                  ir_on(5);
+  65   2                  delay_ms(30);
+  66   2                    break;
+  67   2          case 1:ir_on(1);
+  68   2                  delay_ms(5);
+  69   2                  if(!irR2){
+  70   3                    Beep=0;
+  71   3                    display(2);
+  72   3                  }
+  73   2                  else Beep=1;
+  74   2                  ir_on(5);
+  75   2                  delay_ms(30);
+  76   2                    break;
+  77   2          case 2:ir_on(2);
+  78   2                  delay_ms(5);
+  79   2                  if(!irR3){
+  80   3                    Beep=0;
+  81   3                    display(3);
+  82   3                  }
+  83   2                  else Beep=1;
+  84   2                  ir_on(5);
+  85   2                  delay_ms(30);
+  86   2                    break;
+  87   2          case 3:ir_on(3);
+  88   2                  delay_ms(5);
+  89   2                  if(!irR4){
+  90   3                    Beep=0;
+  91   3                    display(4);
+  92   3                  }
+  93   2                  else Beep=1;
+  94   2                  ir_on(5);
+  95   2                  delay_ms(30);
+  96   2                    break;
+  97   2          case 4:ir_on(4);
+  98   2                  delay_ms(5);
+  99   2                  if(!irR5){
+ 100   3                    Beep=0;
+ 101   3                    display(5);
+ 102   3                  }
+ 103   2                  else Beep=1;
+ 104   2                  ir_on(5);
+ 105   2                  delay_ms(30);
+ 106   2                    break;
+ 107   2          default:break;
+ 108   2          }
+ 109   1      }
+ 110          void main()
+ 111          {
+ 112   1        uchar k=0;
+ 113   1        while(1)
+ 114   1        {
+ 115   2          scan(k);
+ 116   2          if(!S1)
+ 117   2          {
+C51 COMPILER V9.53.0.0   TEST                                                              11/29/2021 12:52:26 PAGE 3   
+
+ 118   3            delay_ms(10);
+ 119   3            if(!S1)
+ 120   3            {
+ 121   4              k++;
+ 122   4            }
+ 123   3            while(!S1);
+ 124   3            delay_ms(10);
+ 125   3            while(!S1);
+ 126   3            if(k==5)
+ 127   3              k=0;
+ 128   3            }
+ 129   2          }
+ 130   1          
+ 131   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    295    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

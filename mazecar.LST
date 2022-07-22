@@ -1,0 +1,794 @@
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 1   
+
+
+C51 COMPILER V9.53.0.0, COMPILATION OF MODULE MAZECAR
+OBJECT MODULE PLACED IN mazecar.OBJ
+COMPILER INVOKED BY: D:\C51\BIN\C51.EXE mazecar.c COMPACT OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include<reg52.h>
+   2          unsigned char code forward[8]={0x11,0x93,0x82,0xc6,0x44,0x6c,0x28,0x39};
+   3          unsigned char code right[8]={0x11,0x33,0x22,0x66,0x44,0xcc,0x88,0x99};
+   4          unsigned char code left[8]={0x11,0x99,0x88,0xcc,0x44,0x66,0x22,0x33};
+   5          unsigned char flag = 0;
+   6          unsigned char top = 0;
+   7          unsigned char num = 0;
+   8          unsigned char n=0,m=0;
+   9          unsigned char maze[8][8];
+  10          unsigned char stockx[20];
+  11          unsigned char stocky[20];
+  12          unsigned char is1=0,is2=0,is3=1,is4=1,is5=0;//0???,1???
+  13          unsigned char  list[8][8];
+  14          unsigned char derection = 0;
+  15          unsigned char next;   
+  16          sfr P4=0xe8;
+  17          sbit A0 = P4^0;
+  18          sbit A1 = P2^0;
+  19          sbit A2 = P2^7;
+  20          sbit irR1 = P2^1;
+  21          sbit irR2 = P2^2;//×óÇ°
+  22          sbit irR3 = P2^3;
+  23          sbit irR4 = P2^4;
+  24          sbit irR5 = P2^5;//ÓÒÇ°
+  25          
+  26          void init()
+  27          {
+  28   1        unsigned char i,j;
+  29   1        stockx[0] = 0;
+  30   1        stocky[0] = 0;
+  31   1        
+  32   1        for(i=0;i<8;i++)
+  33   1        {
+  34   2          for(j=0;j<8;j++)
+  35   2          {
+  36   3            maze[i][j] = 0xff;
+  37   3            list[i][j] = 79;
+  38   3          }
+  39   2        }
+  40   1        maze[0][0]=0xf7;
+  41   1        list[0][0]=0;
+  42   1      }
+  43          void delay(unsigned int x)
+  44          {
+  45   1        unsigned int i,j;
+  46   1        for(i=0;i<x;i++)
+  47   1        {
+  48   2          for(j=0;j<114;j++);
+  49   2        }
+  50   1      }
+  51          
+  52          void irON (unsigned char x)
+  53          {
+  54   1        A0 = x&(0x01);
+  55   1        A1 = x&(0x02);
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 2   
+
+  56   1        A2 = x&(0x04);
+  57   1      }
+  58          
+  59          
+  60          void ir1()//?
+  61          {
+  62   1        if(irR1==0)//??
+  63   1        {
+  64   2          is1=1;
+  65   2          //P0 = table[1];
+  66   2        }
+  67   1        else
+  68   1        {
+  69   2          is1=0;
+  70   2          num++;
+  71   2          //P0=table[0];
+  72   2        }
+  73   1      }
+  74          void ir2()//??
+  75          {
+  76   1        if(irR2==0)
+  77   1          is2=1;
+  78   1        else
+  79   1        {
+  80   2          is2=0;
+  81   2        }
+  82   1      }
+  83          void ir3()//?
+  84          {
+  85   1        if(irR3==0)
+  86   1          is3=1;
+  87   1        else
+  88   1        {
+  89   2          is3=0;
+  90   2          num++;
+  91   2        }
+  92   1      }
+  93          void ir4()//?
+  94          {
+  95   1        if(irR4==0)
+  96   1          is4=1;
+  97   1        else
+  98   1        {
+  99   2          is4=0;
+ 100   2          num++;
+ 101   2        }
+ 102   1      }
+ 103          void ir5()//??
+ 104          {
+ 105   1        if(irR5==0)
+ 106   1          is5=1;
+ 107   1        else
+ 108   1        {
+ 109   2          is5=0;
+ 110   2        }
+ 111   1      }
+ 112          void deternm(unsigned char s)
+ 113          {
+ 114   1        if(s==0)
+ 115   1          m++;
+ 116   1        if(s==1)
+ 117   1          n++;
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 3   
+
+ 118   1        if(s==2)
+ 119   1          m--;
+ 120   1        if(s==3)
+ 121   1          n--;
+ 122   1      }
+ 123          void deternext(unsigned char s)
+ 124          {
+ 125   1        if(s==0)
+ 126   1          next = 0x8f;
+ 127   1        else if(s==1)
+ 128   1          next = 0x4f;
+ 129   1        else if(s==2)
+ 130   1          next = 0x2f;
+ 131   1        else if(s==3)
+ 132   1          next = 0x1f;
+ 133   1      }
+ 134          unsigned char deterwallmessage()
+ 135          {
+ 136   1        unsigned char t;
+ 137   1        if(derection == 0)
+ 138   1        {
+ 139   2          t = is1*8+is4*4+is3;
+ 140   2        }
+ 141   1        else if(derection ==1)
+ 142   1        {
+ 143   2          t = is1*4+is3*8+is4*2;
+ 144   2        }
+ 145   1        else if(derection == 2)
+ 146   1        {
+ 147   2          t = is1*2+is4+is3*4;
+ 148   2        }
+ 149   1        else if(derection == 3)
+ 150   1        {
+ 151   2          t = is1+is4*8+is3*2;
+ 152   2        }
+ 153   1        return t;
+ 154   1        
+ 155   1      }
+ 156           char  forwmazex(unsigned char x)
+ 157          {
+ 158   1        if(x==0)
+ 159   1          return 0;
+ 160   1        else if(x==1)
+ 161   1          return 1;
+ 162   1        else if(x==2)
+ 163   1          return 0;
+ 164   1        else if(x==3)
+ 165   1          return -1;
+ 166   1        return 0;
+ 167   1      }
+ 168           char forwmazey(unsigned char x)
+ 169          {
+ 170   1          if(x==0)
+ 171   1          return 1;
+ 172   1        else if(x==1)
+ 173   1          return 0;
+ 174   1        else if(x==2)
+ 175   1          return -1;
+ 176   1        else if(x==3)
+ 177   1          return 0;
+ 178   1        return 0;
+ 179   1      }
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 4   
+
+ 180          void debugcar()
+ 181          {
+ 182   1        unsigned char x,y;
+ 183   1        if(is5==1)
+ 184   1        {
+ 185   2          for(y=0;y<5;y++)
+ 186   2        {
+ 187   3          for(x=0;x<8;x++)
+ 188   3          {
+ 189   4            P1 = left[x]&0xf0;
+ 190   4            delay(2);
+ 191   4          }
+ 192   3        }
+ 193   2        }
+ 194   1        else if(is2==1)
+ 195   1        {
+ 196   2          for(y=0;y<5;y++)
+ 197   2        {
+ 198   3          for(x=0;x<8;x++)
+ 199   3          {
+ 200   4            P1 = right[x]&0x0f;
+ 201   4            delay(2);
+ 202   4          }
+ 203   3        }
+ 204   2        }
+ 205   1      }
+ 206           char  rigmazex(unsigned char x)
+ 207          {
+ 208   1        if(x==0)
+ 209   1          return 1;
+ 210   1        else if(x==1)
+ 211   1          return 0;
+ 212   1        else if(x==2)
+ 213   1          return -1;
+ 214   1        else if(x==3)
+ 215   1          return 0;
+ 216   1        return 0;
+ 217   1      }
+ 218           char rigmazey(unsigned char x)
+ 219          {
+ 220   1          if(x==0)
+ 221   1          return 0;
+ 222   1        else if(x==1)
+ 223   1          return -1;
+ 224   1        else if(x==2)
+ 225   1          return 0;
+ 226   1        else if(x==3)
+ 227   1          return 1;
+ 228   1        return 0;
+ 229   1      }
+ 230           char  lefmazex(unsigned char x)
+ 231          {
+ 232   1        if(x==0)
+ 233   1          return -1;
+ 234   1        else if(x==1)
+ 235   1          return 0;
+ 236   1        else if(x==2)
+ 237   1          return 1;
+ 238   1        else if(x==3)
+ 239   1          return 0;
+ 240   1        return 0;
+ 241   1      }
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 5   
+
+ 242           char lefmazey(unsigned char x)
+ 243          {
+ 244   1          if(x==0)
+ 245   1          return 0;
+ 246   1        else if(x==1)
+ 247   1          return 1;
+ 248   1        else if(x==2)
+ 249   1          return 0;
+ 250   1        else if(x==3)
+ 251   1          return -1;
+ 252   1        return 0;
+ 253   1      }
+ 254          void forw()
+ 255          {
+ 256   1        unsigned char i,j;
+ 257   1        for(j=0;j<108;j++)
+ 258   1        {
+ 259   2          
+ 260   2          for(i=0;i<8;i++)
+ 261   2          {
+ 262   3            P1 = forward[i];
+ 263   3            delay(2);
+ 264   3          }
+ 265   2          if((j+1)%25==0)
+ 266   2          {
+ 267   3                is2=0;
+ 268   3                is5=0;
+ 269   3                irON(1);
+ 270   3                delay(5);
+ 271   3                ir2();
+ 272   3                irON(5);
+ 273   3                irON(4);
+ 274   3                delay(5);
+ 275   3                ir5();
+ 276   3                irON(5);
+ 277   3                debugcar();
+ 278   3          }
+ 279   2        }
+ 280   1        
+ 281   1      }
+ 282          
+ 283          void lef()
+ 284          {
+ 285   1        unsigned char i,j;
+ 286   1        for(j=0;j<51;j++)
+ 287   1        {
+ 288   2          for(i=0;i<8;i++)
+ 289   2          {
+ 290   3            P1 = left[i];
+ 291   3            delay(2);
+ 292   3          }
+ 293   2        }
+ 294   1        derection = (derection+3)%4;
+ 295   1      }
+ 296          void rig()
+ 297          {
+ 298   1        unsigned char i,j;
+ 299   1        for(j=0;j<51;j++)
+ 300   1        {
+ 301   2          for(i=0;i<8;i++)
+ 302   2          {
+ 303   3            P1 = right[i];
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 6   
+
+ 304   3            delay(2);
+ 305   3          }
+ 306   2        }
+ 307   1        derection = (derection+1)%4;
+ 308   1      }
+ 309          
+ 310          void creatlist()
+ 311          {
+ 312   1        unsigned char i,head = 0,tail = 1,sum = 0;
+ 313   1        for(i=0;i<20;i++)
+ 314   1        {
+ 315   2          stockx[i] = 0;
+ 316   2          stocky[i] = 0;
+ 317   2        }
+ 318   1        stockx[head] = 0;
+ 319   1        stocky[head] = 0;
+ 320   1        while(1)
+ 321   1        {
+ 322   2          if((head==tail))
+ 323   2            break;
+ 324   2            n=stockx[head%20];
+ 325   2            m=stocky[head%20];
+ 326   2          if((maze[n][m]&0x08)!=0x08)
+ 327   2          {
+ 328   3            
+ 329   3            sum++;
+ 330   3            if(sum<list[n][m+1])
+ 331   3            {
+ 332   4              list[n][m+1] = sum;
+ 333   4              stockx[tail%20]=n;
+ 334   4              stocky[tail%20]=m+1;
+ 335   4              tail++;
+ 336   4            }
+ 337   3            sum--;
+ 338   3          }
+ 339   2          if((maze[n][m]&0x04)!=0x04)
+ 340   2          {
+ 341   3          
+ 342   3            sum++;
+ 343   3            if(sum<list[n+1][m])
+ 344   3            {
+ 345   4              list[n+1][m] = sum;
+ 346   4              stockx[tail%20]=n+1;
+ 347   4              stocky[tail%20]=m;
+ 348   4              tail++;
+ 349   4            }
+ 350   3            sum--;
+ 351   3          }
+ 352   2          if((maze[n][m]&0x02)!=0x02)
+ 353   2          {
+ 354   3      
+ 355   3            sum++;
+ 356   3            if(sum<list[n][m-1])
+ 357   3            {
+ 358   4              list[n][m-1] = sum;
+ 359   4              stockx[tail%20]=n;
+ 360   4              stocky[tail%20]=m-1;
+ 361   4              tail++;
+ 362   4            }
+ 363   3            sum--;
+ 364   3          }
+ 365   2          if((maze[n][m]&0x01)!=0x01)
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 7   
+
+ 366   2          {
+ 367   3            
+ 368   3            sum++;
+ 369   3            if(sum<list[n-1][m])
+ 370   3            {
+ 371   4              list[n-1][m] = sum;
+ 372   4              stockx[tail%20]=n-1;
+ 373   4              stocky[tail%20]=m;
+ 374   4              tail++;
+ 375   4            }
+ 376   3            sum--;
+ 377   3          }
+ 378   2          head++;
+ 379   2          n=stockx[head%20];
+ 380   2          m=stocky[head%20];
+ 381   2          if(sum!=list[n][m])
+ 382   2            sum++;
+ 383   2        }
+ 384   1        sum = list[7][7];
+ 385   1        n=7;
+ 386   1        m=7;
+ 387   1        for(i=0;i<20;i++)
+ 388   1        {
+ 389   2          stockx[i] = 0;
+ 390   2          stocky[i] = 0;
+ 391   2        }
+ 392   1        i=0;
+ 393   1        stockx[i]=7;
+ 394   1        stocky[i]=7;
+ 395   1        while(sum!=0)
+ 396   1        {
+ 397   2          if((n-1>=0)&&(n-1<=7)&&(list[n-1][m] == (sum-1))&&((maze[n][m]&0x01)!=0x01))
+ 398   2          {
+ 399   3            i++;
+ 400   3            stockx[i]=n-1;
+ 401   3            stocky[i]=m;
+ 402   3            n--;
+ 403   3            sum--;
+ 404   3          }
+ 405   2          else if((n+1>=0)&&(n+1<=7)&&(list[n+1][m] == (sum-1)) &&((maze[n][m]&0x04)!=0x04))
+ 406   2          {
+ 407   3            i++;
+ 408   3            stockx[i]=n+1;
+ 409   3            stocky[i]=m;
+ 410   3            n++;
+ 411   3            sum--;
+ 412   3          }
+ 413   2          else if((m-1>=0)&&(m-1<=7)&&(list[n][m-1] == (sum-1)) &&((maze[n][m]&0x02)!=0x02))
+ 414   2          {
+ 415   3            i++;
+ 416   3            stockx[i]=n;
+ 417   3            stocky[i]=m-1;
+ 418   3            m--;
+ 419   3            sum--;
+ 420   3          }
+ 421   2          else if((m+1>=0)&&(m+1<=7)&&(list[n][m+1] == (sum-1)) &&((maze[n][m]&0x08)!=0x08))
+ 422   2          {
+ 423   3            i++;
+ 424   3            stockx[i]=n;
+ 425   3            stocky[i]=m+1;
+ 426   3            m++;
+ 427   3            sum--;
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 8   
+
+ 428   3          }
+ 429   2        }
+ 430   1        n=0;
+ 431   1        m=0;
+ 432   1        while((n!=7)||(m!=7))
+ 433   1        {
+ 434   2          if(stocky[i-1]-stocky[i]==1)
+ 435   2          {
+ 436   3            if(derection == 1)
+ 437   3            {
+ 438   4              lef();
+ 439   4              forw();
+ 440   4              m++;
+ 441   4            }
+ 442   3            else
+ 443   3            {
+ 444   4              forw();
+ 445   4            m++;
+ 446   4            }
+ 447   3          }
+ 448   2          else 
+ 449   2          {
+ 450   3            if(derection==1)
+ 451   3            {
+ 452   4              forw();
+ 453   4              n++;
+ 454   4            }
+ 455   3            else
+ 456   3            {
+ 457   4            rig();
+ 458   4            forw();
+ 459   4            n++;
+ 460   4            }
+ 461   3          }
+ 462   2          i--;
+ 463   2        }
+ 464   1        while(1);
+ 465   1      }
+ 466            
+ 467          void reverse()
+ 468          {
+ 469   1        if((maze[n][m]|0x0f)==0x8f)
+ 470   1        {
+ 471   2          if(derection == 0)
+ 472   2          {
+ 473   3            rig();
+ 474   3            rig();
+ 475   3            forw();
+ 476   3            deternm(derection);
+ 477   3            
+ 478   3          }
+ 479   2          else if(derection == 1)
+ 480   2          {
+ 481   3            rig();
+ 482   3            forw();
+ 483   3            deternm(derection);
+ 484   3            
+ 485   3          }
+ 486   2          else if(derection == 2)
+ 487   2          {
+ 488   3            forw();
+ 489   3            deternm(derection);
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 9   
+
+ 490   3            
+ 491   3          }
+ 492   2          else if(derection == 3)
+ 493   2          {
+ 494   3            lef();
+ 495   3            forw();
+ 496   3            deternm(derection);
+ 497   3            
+ 498   3          }
+ 499   2        }
+ 500   1        
+ 501   1        else if((maze[n][m]|0x0f)==0x4f)
+ 502   1        {
+ 503   2          if(derection == 0)
+ 504   2          {
+ 505   3            lef();
+ 506   3            forw();
+ 507   3            deternm(derection);
+ 508   3            
+ 509   3          }
+ 510   2          
+ 511   2          else if(derection == 1)
+ 512   2          {
+ 513   3            rig();
+ 514   3            rig();
+ 515   3            forw();
+ 516   3            deternm(derection);
+ 517   3            
+ 518   3          }
+ 519   2          else if(derection == 2)
+ 520   2          {
+ 521   3            rig();
+ 522   3            forw();
+ 523   3            deternm(derection);
+ 524   3            
+ 525   3          }
+ 526   2          else if(derection == 3)
+ 527   2          {
+ 528   3            forw();
+ 529   3            deternm(derection);
+ 530   3            
+ 531   3          }
+ 532   2        }
+ 533   1        
+ 534   1        else if((maze[n][m]|0x0f)==0x2f)
+ 535   1        {
+ 536   2          if(derection == 0)
+ 537   2          {
+ 538   3            forw();
+ 539   3            deternm(derection);
+ 540   3            
+ 541   3          }
+ 542   2          
+ 543   2          else if(derection == 1)
+ 544   2          {
+ 545   3            lef();
+ 546   3            forw();
+ 547   3            deternm(derection);
+ 548   3            
+ 549   3          }
+ 550   2          else if(derection == 2)
+ 551   2          {
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 10  
+
+ 552   3            rig();
+ 553   3            rig();
+ 554   3            forw();
+ 555   3            deternm(derection);
+ 556   3            
+ 557   3          }
+ 558   2          else if(derection == 3)
+ 559   2          {
+ 560   3            rig();
+ 561   3            forw();
+ 562   3            deternm(derection);
+ 563   3            
+ 564   3          }
+ 565   2        }
+ 566   1        
+ 567   1        else if((maze[n][m]|0x0f)==0x1f)
+ 568   1        {
+ 569   2          if(derection == 0)
+ 570   2          {
+ 571   3            rig();
+ 572   3            forw();
+ 573   3            deternm(derection);
+ 574   3            
+ 575   3          }
+ 576   2          
+ 577   2          else if(derection == 1)
+ 578   2          {
+ 579   3            forw();
+ 580   3            deternm(derection);
+ 581   3            
+ 582   3          }
+ 583   2          else if(derection == 2)
+ 584   2          {
+ 585   3            lef();
+ 586   3            forw();
+ 587   3            deternm(derection);
+ 588   3            
+ 589   3          }
+ 590   2          else if(derection == 3)
+ 591   2          {
+ 592   3            rig();
+ 593   3            rig();
+ 594   3            forw();
+ 595   3            deternm(derection);
+ 596   3            
+ 597   3          }
+ 598   2        }
+ 599   1      
+ 600   1      }
+ 601          
+ 602          
+ 603          void oper()//???,???????????????,???????nm????,??????????
+ 604          { 
+ 605   1        
+ 606   1        if((n==stockx[top])&&(m==stocky[top])&&(n!=0||m!=0))
+ 607   1        {
+ 608   2          if((is4==0)&&(maze[n+rigmazex(derection)][m+rigmazey(derection)]==0xff))//?
+ 609   2        {
+ 610   3          rig();
+ 611   3          forw();
+ 612   3          deternext(derection);
+ 613   3          deternm(derection);
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 11  
+
+ 614   3          maze[n][m]=(maze[n][m]&next);
+ 615   3          
+ 616   3        }
+ 617   2        else if((is1==0)&&(maze[n+forwmazex(derection)][m+forwmazey(derection)]==0xff))//?
+ 618   2        {
+ 619   3          forw();
+ 620   3          deternext(derection);
+ 621   3          deternm(derection);
+ 622   3          maze[n][m]=(maze[n][m]&next);
+ 623   3          
+ 624   3        }
+ 625   2        else if((is3==0)&&(maze[n+lefmazex(derection)][m+lefmazey(derection)]==0xff))//?
+ 626   2        {
+ 627   3          lef();
+ 628   3          forw();
+ 629   3          deternext(derection);
+ 630   3          deternm(derection);
+ 631   3          maze[n][m]=(maze[n][m]&next);
+ 632   3          
+ 633   3          
+ 634   3        }
+ 635   2        else 
+ 636   2        {
+ 637   3          top--;
+ 638   3          while(1)
+ 639   3          {
+ 640   4            if((n==stockx[top])&&(m==stocky[top]))
+ 641   4              break;
+ 642   4            reverse();
+ 643   4          }
+ 644   3          if(top == 0)
+ 645   3          {
+ 646   4              rig();
+ 647   4              rig();
+ 648   4              creatlist();
+ 649   4          }
+ 650   3          
+ 651   3        }
+ 652   2        }
+ 653   1        else 
+ 654   1        {
+ 655   2          if((is4==0)&&(maze[n+rigmazex(derection)][m+rigmazey(derection)]==0xff))//?
+ 656   2        {
+ 657   3          rig();
+ 658   3          forw();
+ 659   3          deternext(derection);
+ 660   3          deternm(derection);
+ 661   3          maze[n][m]=(maze[n][m]&next);
+ 662   3          
+ 663   3        }
+ 664   2        else if((is1==0)&&(maze[n+forwmazex(derection)][m+forwmazey(derection)]==0xff))//?
+ 665   2        {
+ 666   3          forw();
+ 667   3          deternext(derection);
+ 668   3          deternm(derection);
+ 669   3          maze[n][m]=(maze[n][m]&next);
+ 670   3        
+ 671   3        }
+ 672   2        else if((is3==0)&&(maze[n+lefmazex(derection)][m+lefmazey(derection)]==0xff)) //?
+ 673   2        {
+ 674   3          lef();
+ 675   3          forw();
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 12  
+
+ 676   3          deternext(derection);
+ 677   3          deternm(derection);
+ 678   3          maze[n][m]=(maze[n][m]&next);
+ 679   3        }
+ 680   2        else
+ 681   2        {
+ 682   3          while(1)  
+ 683   3          {
+ 684   4            if((n==stockx[top])&&(m==stocky[top]))
+ 685   4              break;
+ 686   4            reverse();
+ 687   4          }
+ 688   3        }
+ 689   2      }
+ 690   1      }
+ 691          void test()
+ 692          {
+ 693   1        unsigned char wallmessage;
+ 694   1        
+ 695   1        
+ 696   1        while(flag!=3)
+ 697   1        {
+ 698   2        switch(flag)
+ 699   2            {
+ 700   3              case 0:
+ 701   3                irON(0);
+ 702   3                delay(10);
+ 703   3                ir1();
+ 704   3                irON(5);
+ 705   3                break;
+ 706   3              case 1:
+ 707   3                irON(2);
+ 708   3                delay(10);
+ 709   3                ir3();
+ 710   3                irON(5);
+ 711   3                break;
+ 712   3              case 2:
+ 713   3                irON(3);
+ 714   3                delay(10);
+ 715   3                ir4();
+ 716   3                irON(5);
+ 717   3                break;
+ 718   3        
+ 719   3            }
+ 720   2            flag++;
+ 721   2            delay(10);
+ 722   2          }
+ 723   1        flag=0;
+ 724   1          if(num>1&&(n!=stockx[top]||m!=stocky[top]))
+ 725   1          {
+ 726   2            top++;
+ 727   2            stockx[top] = n;
+ 728   2            stocky[top] = m;
+ 729   2            
+ 730   2          }
+ 731   1          num = 0;
+ 732   1          wallmessage = deterwallmessage(); 
+ 733   1          if((maze[n][m]|0xf0)==0xff)
+ 734   1          maze[n][m]=(maze[n][m]&(wallmessage+240));
+ 735   1        
+ 736   1      }
+ 737          
+C51 COMPILER V9.53.0.0   MAZECAR                                                           12/03/2021 20:09:06 PAGE 13  
+
+ 738          void main()
+ 739          {
+ 740   1        init();
+ 741   1        delay(500);
+ 742   1        while(1)
+ 743   1        {
+ 744   2          oper();
+ 745   2          test();
+ 746   2        }
+ 747   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2557    ----
+   CONSTANT SIZE    =     24    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =    180       5
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

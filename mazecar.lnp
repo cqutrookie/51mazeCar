@@ -1,0 +1,4 @@
+"STARTUP.obj",
+"mazecar.obj" 
+TO "mazecar" 
+RAMSIZE(256) 
